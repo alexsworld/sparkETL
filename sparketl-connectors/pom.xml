@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.sparketl</groupId>
+    <artifactId>sparketl-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <artifactId>sparketl-connectors</artifactId>
+  <packaging>jar</packaging>
+  <name>SparkETL Connectors</name>
+  <description>内置连接器：JDBC / Hive / HDFS / S3 / Kafka / Iceberg / Delta Lake</description>
+
+  <properties>
+    <!--
+      测试 JVM 参数：本模块测试需启动真实 SparkSession，Spark 3.5 在 Java 9+ 上运行
+      要求 add-opens 打开部分 JDK 模块（如 StorageUtils 访问 sun.nio.ch.DirectBuffer）；
+      -XX:+IgnoreUnrecognizedVMOptions 保证在 Java 8 上运行时自动忽略这些参数。
+    -->
+    <test.jvm.args>-Xmx2g -Dfile.encoding=UTF-8 -XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED</test.jvm.args>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.sparketl</groupId>
+      <artifactId>sparketl-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_${scala.binary.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-hive_${scala.binary.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <!-- 测试：H2 验证 JDBC 连接器读写与 upsert 幂等 -->
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.binary.version}</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

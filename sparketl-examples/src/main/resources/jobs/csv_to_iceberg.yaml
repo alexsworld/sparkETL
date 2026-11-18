@@ -1,0 +1,37 @@
+# 示例作业 3：CSV(HDFS) -> Iceberg（构建湖仓底座）
+# 运行时依赖：--packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2
+name: example_csv_to_iceberg
+
+spark:
+  spark.master: local[*]
+  spark.sql.catalog.iceberg_catalog: org.apache.iceberg.spark.SparkCatalog
+  spark.sql.catalog.iceberg_catalog.type: hadoop
+  spark.sql.catalog.iceberg_catalog.warehouse: hdfs:///warehouse/gps
+
+input:
+  type: hdfs
+  options:
+    path: /data/raw/gps
+    format: csv
+    header: "true"
+    delimiter: ","
+
+transforms:
+  - kind: cast
+    params: { mappings: "lon:double,lat:double,speed:bigint" }
+  - kind: dropDuplicates
+    params: { columns: "device_id,gps_time" }
+
+outputs:
+  - type: iceberg
+    mode: overwrite
+    options:
+      path: iceberg_catalog.ods.gps_clean
+      # replaceWhere: "dt = '2026-11-18'"   # 按谓词覆盖分区（可选）
+
+quality:
+  tableRules:
+    - name: not_empty
+      kind: minRows
+      params: { minRows: "1" }
+  onFailure: FAIL

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SparkETL 运行时日志配置（Logback）。
+  统一 pattern：时间 | 级别 | 线程 | Logger | 消息；业务日志输出到 stdout，
+  便于 YARN 日志聚合与 kubectl logs 采集。
+-->
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <!-- 框架日志级别 -->
+  <logger name="com.sparketl" level="INFO"/>
+  <!-- 第三方噪音抑制 -->
+  <logger name="org.apache.spark" level="WARN"/>
+  <logger name="org.apache.hadoop" level="WARN"/>
+  <logger name="org.spark_project" level="WARN"/>
+  <logger name="org.eclipse.jetty" level="WARN"/>
+  <logger name="org.apache.parquet" level="WARN"/>
+  <logger name="io.prometheus" level="WARN"/>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>

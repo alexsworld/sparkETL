@@ -1,0 +1,41 @@
+# 示例作业 5：本地可运行的端到端演示（零外部依赖）
+# 依赖 sparketl-examples 注册的 range 自定义数据源，可直接 local 模式运行：
+#   mvn -pl sparketl-examples -am package -DskipTests
+#   spark-submit --class com.sparketl.launch.SparkEtlEntrypoint \
+#     sparketl-dist/target/sparketl-dist-1.0.0.jar \
+#     --config sparketl-examples/src/main/resources/jobs/local_range_demo.yaml
+name: example_local_range_demo
+
+spark:
+  spark.master: "local[2]"
+
+input:
+  type: range                      # 自定义连接器示例
+  options:
+    start: "0"
+    end: "100"
+
+transforms:
+  - kind: withColumn
+    params:
+      name: id_str
+      expression: "CAST(id AS STRING)"
+  - kind: select
+    params: { columns: "id,id_str,batch_time" }
+
+quality:
+  rowRules:
+    - name: id_non_negative
+      expression: "id >= 0"
+  tableRules:
+    - name: row_count
+      kind: minRows
+      params: { minRows: "10" }
+  onFailure: FAIL
+
+outputs:
+  - type: hdfs
+    mode: overwrite                # staging + 原子提交，重跑幂等
+    options:
+      path: target/example_output/range_demo
+      format: parquet

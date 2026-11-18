@@ -1,0 +1,30 @@
+# 示例作业 4：Kafka -> Delta Lake（准实时明细入湖）
+# 运行时依赖：--packages io.delta:delta-spark_2.12:3.1.0
+name: example_kafka_to_delta
+
+spark:
+  spark.master: local[*]
+  spark.sql.extensions: io.delta.sql.DeltaSparkSessionExtension
+  spark.sql.catalog.spark_catalog: org.apache.spark.sql.delta.catalog.DeltaCatalog
+
+input:
+  type: kafka
+  options:
+    bootstrapServers: "${env:ETL_KAFKA_BROKERS}"
+    subscribe: gps_events
+    startingOffsets: earliest
+    endingOffsets: latest
+
+transforms:
+  - kind: withColumn
+    params:
+      name: payload
+      expression: "CAST(value AS STRING)"
+  - kind: filter
+    params: { condition: "payload IS NOT NULL AND length(payload) > 0" }
+
+outputs:
+  - type: delta
+    mode: append
+    options:
+      path: /warehouse/delta/gps_events

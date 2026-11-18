@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SparkETL - 基于 Apache Spark 3.5.x 的企业级大数据 ETL 框架（父 POM）
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.sparketl</groupId>
+  <artifactId>sparketl-parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>SparkETL Parent</name>
+  <description>开源的、配置驱动的企业级大数据 ETL 框架，基于 Apache Spark 3.5.x</description>
+  <url>https://github.com/sparketl/sparketl</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>sparketl-core</module>
+    <module>sparketl-connectors</module>
+    <module>sparketl-quality</module>
+    <module>sparketl-monitor</module>
+    <module>sparketl-examples</module>
+    <module>sparketl-dist</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- Scala / Spark 基线：Spark 3.5.x + Scala 2.12，编译目标 Java 8，兼容 Java 8/11/17 运行时 -->
+    <scala.binary.version>2.12</scala.binary.version>
+    <scala.version>2.12.18</scala.version>
+    <spark.version>3.5.3</spark.version>
+    <maven.compiler.source>8</maven.compiler.source>
+    <maven.compiler.target>8</maven.compiler.target>
+    <!-- 依赖版本集中管理 -->
+    <snakeyaml.version>2.2</snakeyaml.version>
+    <slf4j.version>2.0.9</slf4j.version>
+    <logback.version>1.3.14</logback.version>
+    <metrics.version>4.2.25</metrics.version>
+    <prometheus.version>0.16.0</prometheus.version>
+    <h2.version>2.2.224</h2.version>
+    <scalatest.version>3.2.19</scalatest.version>
+    <iceberg.version>1.5.2</iceberg.version>
+    <delta.version>3.1.0</delta.version>
+    <mysql.version>8.0.33</mysql.version>
+    <postgresql.version>42.7.3</postgresql.version>
+    <!-- 插件版本 -->
+    <scala-maven-plugin.version>4.8.1</scala-maven-plugin.version>
+    <scalatest-maven-plugin.version>2.2.0</scalatest-maven-plugin.version>
+    <compiler-plugin.version>3.11.0</compiler-plugin.version>
+    <assembly-plugin.version>3.6.0</assembly-plugin.version>
+    <spotless-plugin.version>2.43.0</spotless-plugin.version>
+    <!-- 测试 JVM 参数：JDK 17 运行 Spark 3.5 需要 add-opens 放行内部 API；
+         IgnoreUnrecognizedVMOptions 保证 Java 8 下忽略不识别参数 -->
+    <test.jvm.args>-Xmx2g -Dfile.encoding=UTF-8 -XX:+IgnoreUnrecognizedVMOptions --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.nio.cs=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandleAccessor=false</test.jvm.args>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Spark 基座（各模块统一 provided，运行时由集群提供） -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-hive_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <!-- 可选连接器运行时（用户按需通过 spark-submit 的 packages 参数提供，此处仅做版本锚定） -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
+        <version>${spark.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.delta</groupId>
+        <artifactId>delta-spark_${scala.binary.version}</artifactId>
+        <version>${delta.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.iceberg</groupId>
+        <artifactId>iceberg-spark-runtime-3.5_${scala.binary.version}</artifactId>
+        <version>${iceberg.version}</version>
+      </dependency>
+      <!-- JDBC 驱动（运行时按需提供，仅文档/测试锚定版本） -->
+      <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <version>${mysql.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
+      </dependency>
+      <!-- 框架自身依赖 -->
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>${snakeyaml.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <!-- Dropwizard Metrics（监控模块） -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jmx</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <!-- Prometheus（监控模块） -->
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_httpserver</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+      <!-- 测试依赖 -->
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>${h2.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_${scala.binary.version}</artifactId>
+        <version>${scalatest.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <!-- 父工程自身的测试依赖：避免聚合构建时 scalatest-maven-plugin 在 parent 上因缺依赖而失败；
+       子模块按需继承（test scope，不进入发布产物） -->
+  <dependencies>
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.binary.version}</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler-plugin.version}</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <encoding>UTF-8</encoding>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>net.alchim31.maven</groupId>
+          <artifactId>scala-maven-plugin</artifactId>
+          <version>${scala-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>compile</goal>
+                <goal>testCompile</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <scalaVersion>${scala.version}</scalaVersion>
+            <args>
+              <arg>-target:jvm-1.8</arg>
+              <arg>-deprecation</arg>
+              <arg>-feature</arg>
+              <arg>-unchecked</arg>
+            </args>
+            <jvmArgs>
+              <jvmArg>-Xms256m</jvmArg>
+              <jvmArg>-Xmx2g</jvmArg>
+            </jvmArgs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.scalatest</groupId>
+          <artifactId>scalatest-maven-plugin</artifactId>
+          <version>${scalatest-maven-plugin.version}</version>
+          <configuration>
+            <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+            <junitxml>.</junitxml>
+            <filereports>TestSuite.txt</filereports>
+            <argLine>${test.jvm.args}</argLine>
+          </configuration>
+          <executions>
+            <execution>
+              <id>test</id>
+              <goals>
+                <goal>test</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>${assembly-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${spotless-plugin.version}</version>
+          <configuration>
+            <scala>
+              <scalafmt>
+                <file>${maven.multiModuleProjectDirectory}/.scalafmt.conf</file>
+              </scalafmt>
+            </scala>
+          </configuration>
+          <!-- 格式化工具不阻塞构建：手动执行 mvn spotless:apply / spotless:check -->
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,7 @@
+com.sparketl.connectors.hdfs.HdfsProvider
+com.sparketl.connectors.s3.S3Provider
+com.sparketl.connectors.hive.HiveProvider
+com.sparketl.connectors.jdbc.JdbcProvider
+com.sparketl.connectors.kafka.KafkaProvider
+com.sparketl.connectors.iceberg.IcebergProvider
+com.sparketl.connectors.delta.DeltaProvider

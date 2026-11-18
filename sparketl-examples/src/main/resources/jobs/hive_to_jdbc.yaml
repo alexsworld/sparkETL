@@ -1,0 +1,27 @@
+# 示例作业 2：Hive -> JDBC（数仓结果回写业务库，upsert 幂等）
+name: example_hive_to_jdbc
+
+spark:
+  spark.master: local[*]
+
+input:
+  type: hive
+  options:
+    query: "SELECT id, name, amount, dt FROM dws.daily_summary WHERE dt = '2026-11-18'"
+
+outputs:
+  - type: jdbc
+    mode: upsert                   # 基于 upsertKeys 的 MERGE 幂等写入
+    options:
+      url: "${env:ETL_JDBC_URL}"
+      user: "${env:ETL_JDBC_USER}"
+      password: "${env:ETL_JDBC_PASSWORD}"
+      driver: org.postgresql.Driver
+      table: report.daily_summary
+      upsertKeys: "id"
+      batchsize: "1000"
+
+retry:
+  maxAttempts: 3
+  policy: fixed
+  initialDelayMs: "1000"

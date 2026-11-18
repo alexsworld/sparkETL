@@ -1,0 +1,67 @@
+# 示例作业 1：JDBC -> Hive（经典数仓 ODS 入仓场景）
+# 说明：url/user/password 支持 ${env:VAR} 环境变量注入，避免明文敏感信息
+name: example_jdbc_to_hive
+batchTime: "2026-11-18 10:00:00"
+
+spark:
+  spark.master: local[*]           # 生产 YARN 提交时删除此行，由集群指定
+  sparketl.hiveSupport: "true"
+
+input:
+  type: jdbc
+  options:
+    url: "${env:ETL_JDBC_URL}"
+    user: "${env:ETL_JDBC_USER}"
+    password: "${env:ETL_JDBC_PASSWORD}"
+    driver: com.mysql.cj.jdbc.Driver
+    table: biz.gps_raw
+    fetchsize: "10000"
+    partitionColumn: id            # 分片并行读取（大数据量建议配置）
+    lowerBound: "0"
+    upperBound: "10000000"
+    numPartitions: "8"
+
+transforms:
+  - kind: filter
+    params: { condition: "device_id IS NOT NULL" }
+  - kind: custom
+    name: gps_clean                # sparketl-examples 提供的自定义转换器
+    params: { batchTime: "2026-11-18 10:00:00" }
+
+quality:
+  rowRules:
+    - name: coord_valid
+      expression: "lon BETWEEN -180 AND 180 AND lat BETWEEN -90 AND 90"
+  tableRules:
+    - name: row_count_guard
+      kind: minRows
+      params: { minRows: "1" }
+  onFailure: WARN
+  quarantine:
+    type: parquet
+    path: /data/quarantine/gps
+  alerts:
+    - type: log
+
+outputs:
+  - type: hive
+    mode: overwrite                # 动态分区覆盖，重跑幂等
+    options:
+      table: ods.gps_clean
+      partitionBy: "dt"
+
+retry:
+  maxAttempts: 3
+  policy: exponential
+  initialDelayMs: "2000"
+  multiplier: "2.0"
+
+monitor:
+  runStore:
+    url: "${env:ETL_RUNSTORE_URL}"
+    user: "${env:ETL_RUNSTORE_USER}"
+    password: "${env:ETL_RUNSTORE_PASSWORD}"
+    table: sparketl_run_store
+  metrics:
+    prometheusPort: "9091"
+    slf4j: true
