@@ -1,0 +1,15 @@
+title: SparkETL
+description: 配置驱动的企业级大数据 ETL 框架（基于 Apache Spark 3.5.x）
+theme: jekyll-theme-cayman
+
+# 为所有页面统一注入 default 布局，无需在每篇文档中写 front matter
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: default
+
+# GitHub Pages 关闭多余插件，保持最简
+markdown: kramdown
+highlighter: rouge

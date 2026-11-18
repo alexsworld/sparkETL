@@ -23,3 +23,7 @@ logs/
 # 本地产物
 **/quarantine/
 **/staging/
+
+# Jekyll 本地构建产物
+docs/_site/
+docs/.jekyll-cache/
